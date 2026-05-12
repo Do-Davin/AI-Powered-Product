@@ -10,21 +10,23 @@ export interface ProductImageFile {
 
 @Injectable()
 export class ProductDescriptionService {
-  private readonly googleGenAI: GoogleGenAI;
+  private readonly googleGenAI?: GoogleGenAI;
 
   constructor() {
     const apiKey = process.env['GEMINI_API_KEY'];
 
-    if (!apiKey) {
-      throw new InternalServerErrorException('Missing GEMINI_API_KEY');
+    if (apiKey) {
+      this.googleGenAI = new GoogleGenAI({ apiKey });
     }
-
-    this.googleGenAI = new GoogleGenAI({ apiKey });
   }
 
   async generateFromImage(
     image: ProductImageFile,
   ): Promise<GeneratedProductDescription> {
+    if (!this.googleGenAI) {
+      throw new InternalServerErrorException('Missing GEMINI_API_KEY');
+    }
+
     const imageBase64 = image.buffer.toString('base64');
 
     const response = await this.googleGenAI.models.generateContent({
